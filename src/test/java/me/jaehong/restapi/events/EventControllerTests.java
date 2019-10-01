@@ -33,6 +33,38 @@ public class EventControllerTests {
     @Test
     public void createEvent() throws Exception {
         //Given
+        EventDto event = EventDto.builder()
+                .name("Spring")
+                .description("REST API development")
+                .beginEnrollmentDateTime(LocalDateTime.of(2019, 9, 30, 15, 27))
+                .closeEnrollmentDateTime(LocalDateTime.of(2019, 10, 1, 15, 27))
+                .beginEventDateTime(LocalDateTime.of(2019, 10, 2, 15, 27))
+                .endEventDateTime(LocalDateTime.of(2019, 10, 3, 15, 27))
+                .basePrice(100)
+                .maxPrice(200)
+                .limitOfEnrollment(100)
+                .location("경성대학교")
+                .build();
+        //When
+        mockMvc.perform(post("/api/events")
+                    .contentType(MediaType.APPLICATION_JSON_UTF8)
+                    .accept(MediaTypes.HAL_JSON)
+                    .content(objectMapper.writeValueAsString(event)))
+        //Then
+                .andDo(print())
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("id").exists())
+                .andExpect(header().exists(HttpHeaders.LOCATION))
+                .andExpect(header().string(HttpHeaders.CONTENT_TYPE, MediaTypes.HAL_JSON_UTF8_VALUE))
+                .andExpect(jsonPath("id").value(Matchers.not(100)))
+                .andExpect(jsonPath("free").value(Matchers.not(true)))
+                .andExpect(jsonPath("eventStatus").value(EventStatus.DRAFT.name()))
+        ;
+    }
+
+    @Test
+    public void createEvent_Bad_Request() throws Exception {
+        //Given
         Event event = Event.builder()
                 .id(100)
                 .name("Spring")
@@ -51,18 +83,12 @@ public class EventControllerTests {
                 .build();
         //When
         mockMvc.perform(post("/api/events")
-                    .contentType(MediaType.APPLICATION_JSON_UTF8)
-                    .accept(MediaTypes.HAL_JSON)
-                    .content(objectMapper.writeValueAsString(event)))
-        //Then
+                .contentType(MediaType.APPLICATION_JSON_UTF8)
+                .accept(MediaTypes.HAL_JSON)
+                .content(objectMapper.writeValueAsString(event)))
+                //Then
                 .andDo(print())
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("id").exists())
-                .andExpect(header().exists(HttpHeaders.LOCATION))
-                .andExpect(header().string(HttpHeaders.CONTENT_TYPE, MediaTypes.HAL_JSON_UTF8_VALUE))
-                .andExpect(jsonPath("id").value(Matchers.not(100)))
-                .andExpect(jsonPath("free").value(Matchers.not(true)))
-                .andExpect(jsonPath("eventStatus").value(EventStatus.DRAFT.name()))
+                .andExpect(status().isBadRequest())
         ;
     }
 }
